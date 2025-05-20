@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scream Detection - SafeGuard360</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .navbar {
+            background-color: #000000;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .navbar a {
+            color: #b3b3b3;
+            text-decoration: none;
+            font-size: 16px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .navbar a:hover {
+            background-color: #282828;
+            color: #ffffff;
+        }
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .section-card {
+            background-color: #181818;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: background-color 0.2s;
+        }
+        .section-card:hover {
+            background-color: #282828;
+        }
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            border-radius: 9999px;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.2s;
+            width: 140px;
+            height: 48px;
+            line-height: 48px;
+        }
+        .btn-success {
+            background-color: #1db954;
+            color: #ffffff;
+        }
+        .btn-success:hover {
+            background-color: #1ed760;
+        }
+        .btn-warning {
+            background-color: #535353;
+            color: #ffffff;
+        }
+        .btn-warning:hover {
+            background-color: #636363;
+        }
+        .btn-secondary {
+            background-color: #535353;
+            color: #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #636363;
+        }
+        .alert {
+            background-color: #282828;
+            color: #ffffff;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            border-left: 4px solid #1db954;
+            animation: slideIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 4.5s forwards;
+        }
+        .alert-success {
+            border-left-color: #1db954;
+        }
+        .alert-danger {
+            border-left-color: #e22134;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; display: none; }
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #444444;
+            border-radius: 4px;
+            background-color: #222222;
+            color: #ffffff;
+        }
+        label {
+            display: block;
+            margin: 8px 0;
+            font-weight: bold;
+        }
+        .button-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .timer {
+            text-align: center;
+            margin: 16px 0;
+            font-size: 18px;
+            color: #b3b3b3;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 16px 0;
+            font-size: 16px;
+            color: #1db954;
+        }
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                align-items: center;
+                padding: 12px;
+            }
+            .main-content {
+                padding: 16px;
+            }
+            .btn {
+                width: 120px;
+                height: 40px;
+                line-height: 40px;
+            }
+        }
+    </style>
+    <script>
+        let audioContext = null;
+        let recorder = null;
+        let recordingTimer = null;
+        let startTime = null;
+
+        // WAV encoding function
+        function createWavBlob(audioData) {
+            const sampleRate = 44100;
+            const numChannels = 1;
+            const bitsPerSample = 16;
+
+            // Calculate buffer sizes
+            const samples = audioData.getChannelData(0);
+            const buffer = new ArrayBuffer(44 + samples.length * 2);
+            const view = new DataView(buffer);
+
+            // WAV header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numChannels * bitsPerSample / 8, true);
+            view.setUint16(32, numChannels * bitsPerSample / 8, true);
+            view.setUint16(34, bitsPerSample, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+
+            // Write PCM samples
+            for (let i = 0; i < samples.length; i++) {
+                const sample = Math.max(-1, Math.min(1, samples[i]));
+                view.setInt16(44 + i * 2, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+        }
+
+        function validateFile() {
+            const fileInput = document.getElementById('audio');
+            if (!fileInput.files.length) {
+                alert('Please select an audio file');
+                return false;
+            }
+            const file = fileInput.files[0];
+            if (!file.name.endsWith('.wav')) {
+                alert('Please upload a WAV file');
+                return false;
+            }
+            return true;
+        }
+
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+                    const source = audioContext.createMediaStreamSource(stream);
+                    recorder = new Recorder(source);
+                    recorder.record();
+                    document.getElementById('start-recording').disabled = true;
+                    document.getElementById('stop-recording').disabled = false;
+                    startTime = Date.now();
+                    updateTimer();
+                })
+                .catch(error => {
+                    alert('Error accessing microphone: ' + error.message);
+                });
+        }
+
+        function updateTimer() {
+            const timerDisplay = document.getElementById('timer');
+            recordingTimer = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const seconds = elapsed % 60;
+                const minutes = Math.floor(elapsed / 60);
+                timerDisplay.textContent = `Recording: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                if (elapsed >= 60) { // Stop after 1 minute
+                    stopRecording();
+                }
+            }, 1000);
+        }
+
+        function stopRecording() {
+            if (recorder) {
+                recorder.stop();
+                recorder.exportWAV(blob => {
+                    saveRecording(blob);
+                });
+                clearInterval(recordingTimer);
+                document.getElementById('timer').textContent = 'Recording stopped';
+                document.getElementById('start-recording').disabled = false;
+                document.getElementById('stop-recording').disabled = true;
+            }
+        }
+
+        function saveRecording(blob) {
+            const formData = new FormData();
+            formData.append('audio', blob, 'recording.wav');
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result-text').textContent = 'Result: Analyzing...';
+
+            fetch("{{ url_for('scream') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                const resultCard = document.getElementById('result-card');
+                const resultText = document.getElementById('result-text');
+                if (data.success) {
+                    resultText.textContent = `Result: ${data.result || 'Unknown'}`;
+                    resultCard.style.display = 'block';
+                } else {
+                    resultText.textContent = `Error: ${data.message}`;
+                    resultCard.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result-text').textContent = `Error: ${error.message}`;
+                document.getElementById('result-card').style.display = 'block';
+            });
+        }
+
+        function uploadAudio() {
+            if (!validateFile()) return;
+            const fileInput = document.getElementById('audio');
+            const formData = new FormData();
+            formData.append('audio', fileInput.files[0]);
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result-text').textContent = 'Result: Analyzing...';
+
+            fetch("{{ url_for('scream') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                const resultCard = document.getElementById('result-card');
+                const resultText = document.getElementById('result-text');
+                if (data.success) {
+                    resultText.textContent = `Result: ${data.result || 'Unknown'}`;
+                    resultCard.style.display = 'block';
+                } else {
+                    resultText.textContent = `Error: ${data.message}`;
+                    resultCard.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result-text').textContent = `Error: ${error.message}`;
+                document.getElementById('result-card').style.display = 'block';
+            });
+        }
+
+        // Recorder.js implementation (simplified)
+        function Recorder(source) {
+            const bufferLen = 4096;
+            const context = source.context;
+            const node = context.createScriptProcessor(bufferLen, 1, 1);
+            let recording = false;
+            let buffers = [];
+
+            node.onaudioprocess = function(e) {
+                if (!recording) return;
+                const buffer = e.inputBuffer.getChannelData(0).slice();
+                buffers.push(buffer);
+            };
+
+            source.connect(node);
+            node.connect(context.destination);
+
+            this.record = function() {
+                recording = true;
+                buffers = [];
+            };
+
+            this.stop = function() {
+                recording = false;
+            };
+
+            this.exportWAV = function(callback) {
+                const merged = new Float32Array(buffers.reduce((sum, buf) => sum + buf.length, 0));
+                let offset = 0;
+                for (const buffer of buffers) {
+                    merged.set(buffer, offset);
+                    offset += buffer.length;
+                }
+                const audioBuffer = context.createBuffer(1, merged.length, context.sampleRate);
+                audioBuffer.getChannelData(0).set(merged);
+                callback(createWavBlob(audioBuffer));
+            };
+        }
+
+        window.onload = function() {
+            document.getElementById('stop-recording').disabled = true;
+            document.getElementById('result-card').style.display = 'none';
+        };
+    </script>
+</head>
+<body>
+    <div class="navbar">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('violence') }}">Violence Detection</a>
+        <a href="{{ url_for('scream') }}">Scream Detection</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+    <div class="main-content">
+        <h1 class="text-3xl font-bold mb-6">Scream Detection</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="section-card">
+            <h3 class="text-xl font-semibold mb-4">Real-Time Audio Recording</h3>
+            <p class="text-sm text-gray-400 mb-4">Record audio for up to 1 minute to detect high-pitched or distress vocalizations.</p>
+            <div id="timer" class="timer">Recording: 0:00</div>
+            <div class="button-group">
+                <button id="start-recording" class="btn btn-success" onclick="startRecording()">Start Recording</button>
+                <button id="stop-recording" class="btn btn-warning" onclick="stopRecording()">Stop Recording</button>
+            </div>
+        </div>
+        <div class="section-card">
+            <h3 class="text-xl font-semibold mb-4">Upload Audio for Analysis</h3>
+            <p class="text-sm text-gray-400 mb-4">Upload a WAV file to detect distress vocalizations.</p>
+            <form id="upload-form" onsubmit="event.preventDefault(); uploadAudio();">
+                <label for="audio">Upload Audio (WAV):</label>
+                <input type="file" id="audio" name="audio" accept=".wav" required>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-success">Analyze</button>
+                </div>
+            </form>
+        </div>
+        <div class="section-card" id="result-card">
+            <h3 class="text-xl font-semibold mb-4">Detection Result</h3>
+            <p class="text-sm text-gray-400 mb-4" id="result-text">Result: Unknown</p>
+        </div>
+        <div class="loading" id="loading">Analyzing...</div>
+        <div class="button-group">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Back</a>
+        </div>
+    </div>
+</body>
+</html>

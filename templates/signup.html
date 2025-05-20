@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup - SafeGuard360</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .main-content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .section-card {
+            background-color: #181818;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: background-color 0.2s;
+        }
+        .section-card:hover {
+            background-color: #282828;
+        }
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            border-radius: 9999px;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.2s;
+            width: 140px;
+            height: 48px;
+            line-height: 48px;
+        }
+        .btn-success {
+            background-color: #1db954;
+            color: #ffffff;
+        }
+        .btn-success:hover {
+            background-color: #1ed760;
+        }
+        .btn-secondary {
+            background-color: #535353;
+            color: #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #636363;
+        }
+        .alert {
+            background-color: #282828;
+            color: #ffffff;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            border-left: 4px solid #1db954;
+            animation: slideIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 4.5s forwards;
+        }
+        .alert-success {
+            border-left-color: #1db954;
+        }
+        .alert-danger {
+            border-left-color: #e22134;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; display: none; }
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #444444;
+            border-radius: 4px;
+            background-color: #222222;
+            color: #ffffff;
+        }
+        label {
+            display: block;
+            margin: 8px 0;
+            font-weight: bold;
+        }
+        .button-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 16px;
+            }
+            .btn {
+                width: 120px;
+                height: 40px;
+                line-height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <h1 class="text-3xl font-bold mb-6 text-center">Signup</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="section-card">
+            <h3 class="text-xl font-semibold mb-4">Create Account</h3>
+            <form method="POST">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <label for="confirm_password">Confirm Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-success">Signup</button>
+                    <a href="{{ url_for('login') }}" class="btn btn-secondary">Back to Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
