@@ -5,7 +5,7 @@ import torch
 import torchaudio
 import numpy as np
 from flask import Flask, render_template, request, redirect, url_for, flash, session, Response, jsonify
-from ultralytics import YOLO
+from ultralytics import YOLO, settings
 from PIL import Image
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -20,6 +20,9 @@ import wave
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+# Set YOLO settings for Render
+settings.update({"runs_dir": os.path.join(os.environ.get("UPLOAD_FOLDER", "Uploads"), "yolo_runs")})
 
 # Ensure upload folder exists
 os.makedirs(CONFIG["upload_folder"], exist_ok=True)
