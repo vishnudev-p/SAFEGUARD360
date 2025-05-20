@@ -16,7 +16,7 @@ A Flask-based web surveillance system for **real-time violence and scream detect
 ![Login Page](SCREENSHOT/scrn_.PNG)
 
 ### 2. 🏠 Signup Page  
-![Signup Page](screenshots/1_home_page.png)
+![Signup Page](SCREENSHOT/scrn_2.PNG)
 
 ### 1. 🏠 Home Page  
 ![Home Page](screenshots/1_home_page.png)
