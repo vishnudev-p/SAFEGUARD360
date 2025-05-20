@@ -1,23 +1,26 @@
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    print("Warning: python-dotenv not installed, using environment variables directly")
 
 CONFIG = {
-    "twilio": {
-        "account_sid": os.getenv("TWILIO_ACCOUNT_SID"),
-        "auth_token": os.getenv("TWILIO_AUTH_TOKEN"),
-        "whatsapp_number": "whatsapp:+14155238888",
-        "recipient_whatsapp": "whatsapp:+918714198416",
-        "recipient_phone": "+918714198416"
-    },
+    "upload_folder": os.environ.get("UPLOAD_FOLDER", "Uploads"),
+    "user_file": os.environ.get("USER_FILE", "users.json"),
+    "violence_model_path": os.environ.get("VIOLENCE_MODEL_PATH", "models/my_model1.pt"),
+    "scream_model_path": os.environ.get("SCREAM_MODEL_PATH", "models/Resnet34_Model_2023-12-05--08-37-20.pt"),
     "email": {
-        "sender": os.getenv("EMAIL_SENDER"),
-        "password": os.getenv("EMAIL_PASSWORD"),
-        "receiver": os.getenv("EMAIL_RECEIVER")
+        "sender": os.environ.get("EMAIL_SENDER"),
+        "receiver": os.environ.get("EMAIL_RECEIVER"),
+        "password": os.environ.get("EMAIL_PASSWORD")
     },
-    "violence_model_path": "models/my_model1.pt",
-    "scream_model_path": "models/Resnet34_Model_2023-12-05--08-37-20.pt",
-    "user_file": "users.json",
-    "upload_folder": "uploads"
+    "twilio": {
+        "account_sid": os.environ.get("TWILIO_ACCOUNT_SID"),
+        "auth_token": os.environ.get("TWILIO_AUTH_TOKEN"),
+        "whatsapp_number": os.environ.get("TWILIO_WHATSAPP_NUMBER"),
+        "recipient_whatsapp": os.environ.get("TWILIO_RECIPIENT_WHATSAPP"),
+        "recipient_phone": os.environ.get("TWILIO_RECIPIENT_PHONE")
+    }
 }
