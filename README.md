@@ -19,22 +19,21 @@ A Flask-based web surveillance system for **real-time violence and scream detect
 ![Signup Page](SCREENSHOT/scrn_2.PNG)
 
 ### 3. 🏠 Home Page  
-![Home Page](screenshots/1_home_page.png)
+![Home Page](SCREENSHOT/home.PNG)
 
-### 2. 📹 Webcam Detection Page  
-![Webcam Detection](screenshots/2_webcam_detection.png)
+### 4. 📹 Violence Detection Page  
+![Violence Detection](SCREENSHOT/scrn_3.PNG)
 
-### 3. 🎞️ Video File Detection Page  
-![Video Detection](screenshots/3_video_file_detection.png)
+### 5. 🎞️ Scream Detection Page  
+![Scream Detection](SCREENSHOT/scrn_5.PNG)
 
-### 4. 🎧 Scream Detection Result  
-![Scream Detected](screenshots/4_scream_detected.png)
+### 6. 🎧 Scream Detection Result  
+![Scream Detected](SCREENSHOT/scrn_6.PNG)
 
-### 5. 🚨 Violence Detection Result  
-![Violence Detected](screenshots/5_violence_detected.png)
+### 7. 🚨 Violence Detection Result  
+![Violence Detected](SCREENSHOT/scrn_4.PNG)
 
-### 6. 📤 Alerts Sent (Email / SMS / WhatsApp)  
-![Alerts Sent](screenshots/6_alerts_sent.png)
+
 
 ---
 
