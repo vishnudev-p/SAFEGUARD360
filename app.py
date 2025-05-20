@@ -316,7 +316,7 @@ class DetectionSystem:
                 self.send_whatsapp_alert("🚨 Scream Detected! High Risk Situation!")
             return scream_detected, "Scream" if prediction == 1 else "Non-Scream"
         except Exception as e:
-            print(f"❌ Scream Detection Failed: {str(e)}")
+            print(f"❌ Scream Detection Error: {e}")
             return False, f"Error processing audio: {str(e)}"
 
 detection_system = DetectionSystem()
@@ -391,6 +391,8 @@ def violence():
 def video_feed():
     if 'username' not in session:
         return redirect(url_for('login'))
+    if os.environ.get('RENDER'):  # Check if running on Render
+        return jsonify({"error": "Webcam streaming is not supported on this server"}), 503
     return Response(detection_system.generate_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -398,6 +400,8 @@ def video_feed():
 def stop_webcam():
     if 'username' not in session:
         return redirect(url_for('login'))
+    if os.environ.get('RENDER'):  # Check if running on Render
+        return jsonify({"message": "Webcam streaming not available on this server"}), 200
     detection_system.stop_streaming()
     return '', 204
 
