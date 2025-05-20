@@ -17,6 +17,7 @@ from config import CONFIG
 import base64
 from io import BytesIO
 import wave
+import requests
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -27,18 +28,35 @@ settings.update({"runs_dir": os.path.join(os.environ.get("UPLOAD_FOLDER", "Uploa
 # Ensure upload folder exists
 os.makedirs(CONFIG["upload_folder"], exist_ok=True)
 
+def download_model(url, dest):
+    if not os.path.exists(dest):
+        print(f"Downloading model from {url} to {dest}")
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with open(dest, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        print(f"Model downloaded to {dest}")
+
 class DetectionSystem:
     def __init__(self):
+        violence_model_path = CONFIG["violence_model_path"]
+        scream_model_path = CONFIG["scream_model_path"]
+        # Download models if they don't exist
+        download_model("https://drive.google.com/uc?export=download&id=1MZUAGLDUWXR1-c8lsWU0Z8VSBEOM_ZYQ", violence_model_path)
+        download_model("https://drive.google.com/uc?export=download&id=1qgTqA0QiMCwTNzzY86GhpsIFg9M1Y4tK", scream_model_path)
         try:
-            self.violence_model = YOLO(CONFIG["violence_model_path"])
+            self.violence_model = YOLO(violence_model_path)
         except FileNotFoundError:
-            print(f"❌ Violence model not found at {CONFIG['violence_model_path']}")
+            print(f"❌ Violence model not found at {violence_model_path}")
             raise
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         try:
-            self.scream_model = torch.load(CONFIG["scream_model_path"], map_location=self.device, weights_only=False)
+            self.scream_model = torch.load(scream_model_path, map_location=self.device, weights_only=False)
         except FileNotFoundError:
-            print(f"❌ Scream model not found at {CONFIG['scream_model_path']}")
+            print(f"❌ Scream model not found at {scream_model_path}")
             raise
         self.scream_model.eval()
         self.registered_users = self.load_users()
