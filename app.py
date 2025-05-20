@@ -18,6 +18,7 @@ import base64
 from io import BytesIO
 import wave
 import requests
+import re
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -31,14 +32,24 @@ os.makedirs(CONFIG["upload_folder"], exist_ok=True)
 def download_model(url, dest):
     if not os.path.exists(dest):
         print(f"Downloading model from {url} to {dest}")
-        response = requests.get(url, stream=True)
-        response.raise_for_status()
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
-        with open(dest, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-        print(f"Model downloaded to {dest}")
+        try:
+            session = requests.Session()
+            response = session.get(url, stream=True)
+            # Handle Google Drive confirmation for large files
+            if 'confirm=' in response.text:
+                confirm_token = re.search(r'confirm=([^&]+)', response.text)
+                if confirm_token:
+                    response = session.get(f"{url}&confirm={confirm_token.group(1)}", stream=True)
+            response.raise_for_status()
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            with open(dest, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            print(f"Model downloaded to {dest}")
+        except Exception as e:
+            print(f"❌ Download failed: {e}")
+            raise
 
 class DetectionSystem:
     def __init__(self):
