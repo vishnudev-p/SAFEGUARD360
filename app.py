@@ -29,9 +29,17 @@ os.makedirs(CONFIG["upload_folder"], exist_ok=True)
 
 class DetectionSystem:
     def __init__(self):
-        self.violence_model = YOLO(CONFIG["violence_model_path"])
+        try:
+            self.violence_model = YOLO(CONFIG["violence_model_path"])
+        except FileNotFoundError:
+            print(f"❌ Violence model not found at {CONFIG['violence_model_path']}")
+            raise
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.scream_model = torch.load(CONFIG["scream_model_path"], map_location=self.device, weights_only=False)
+        try:
+            self.scream_model = torch.load(CONFIG["scream_model_path"], map_location=self.device, weights_only=False)
+        except FileNotFoundError:
+            print(f"❌ Scream model not found at {CONFIG['scream_model_path']}")
+            raise
         self.scream_model.eval()
         self.registered_users = self.load_users()
         self.is_streaming = False  # Flag for webcam streaming
